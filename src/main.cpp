@@ -3,6 +3,7 @@
 #include "subsystems/lift.hpp"
 #include "subsystems/manipulator.hpp"
 using namespace okapi::literals;
+using namespace okapi;
 
 /**
  * A callback function for LLEMU's center button.
@@ -28,7 +29,7 @@ void on_center_button() {
  */
 void initialize() {
 	pros::lcd::initialize();
-	pros::lcd::set_text(1, "Hello PROS User!");
+	pros::lcd::print(1, "encoder: %f", lift.getEncoder());
 
 	pros::lcd::register_btn1_cb(on_center_button);
 }
@@ -77,9 +78,11 @@ void autonomous() {}
  * operator control task will be stopped. Re-enabling the robot will restart the
  * task, not resume it from where it left off.
  */
+
 void opcontrol() {
 	okapi::Controller controller;
 	okapi::Rate rate;
+	lift.setEncoderUnits(okapi::AbstractMotor::encoderUnits::degrees);
 	lift.setBrakeMode(okapi::AbstractMotor::brakeMode::hold);
 	manipulator.setBrakeMode(okapi::AbstractMotor::brakeMode::hold);
 
@@ -103,6 +106,13 @@ void opcontrol() {
 			manipulator.controllerSet(-1);
 		} else {
 			manipulator.controllerSet(0);
+		}
+
+		// Lift Stop
+		if (controller[okapi::ControllerDigital::A].isPressed()) {
+			lift.moveAbsolute(45.0, 14);
+		} else if (controller[okapi::ControllerDigital::X].isPressed()) {
+			lift.moveAbsolute(0.0, 14);
 		}
 
 		rate.delay(100_Hz);
